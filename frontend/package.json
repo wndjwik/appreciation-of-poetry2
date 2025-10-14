@@ -1,0 +1,29 @@
+{
+  "name": "poetry-insight-frontend",
+  "version": "1.0.0",
+  "description": "诗鉴前端应用",
+  "main": "main.js",
+  "scripts": {
+    "dev": "uni -p",
+    "dev:h5": "uni serve --platform h5",
+    "dev:mp-weixin": "uni serve --platform mp-weixin",
+    "build": "uni build",
+    "build:h5": "uni build --platform h5",
+    "build:mp-weixin": "uni build --platform mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "^2.0.2-4070620250821001",
+    "@dcloudio/uni-app-vue": "3.0.0-alpha-4080220250929001",
+    "@dcloudio/uni-h5-vue": "3.0.0-alpha-4080220250929001",
+    "@dcloudio/uni-mp-vue": "^2.0.2-4070620250821001",
+    "vue": "^2.6.14"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-shared": "3.0.0-alpha-4080220250929001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-4080220250929001",
+    "vite": "^4.4.0"
+  },
+  "uni-app": {
+    "scripts": {}
+  }
+}
