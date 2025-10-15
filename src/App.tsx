@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Search from './pages/Search'
 import PoemDetail from './pages/PoemDetail'
+import AuthorDetail from './pages/AuthorDetail'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/search" element={<Search />} />
               <Route path="/poem/:id" element={<PoemDetail />} />
+              <Route path="/author/:id" element={<AuthorDetail />} />
             </Routes>
           </main>
         </div>

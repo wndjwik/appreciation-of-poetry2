@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import styled from 'styled-components'
+import PoemService from '../services/poemService'
 
 const DetailContainer = styled.div`
   min-height: calc(100vh - 120px);
@@ -34,6 +35,16 @@ const PoemAuthor = styled.div`
   font-size: ${props => props.theme.typography.fontSize.xl};
   opacity: 0.9;
   margin-bottom: ${props => props.theme.spacing.sm};
+`
+
+const AuthorLink = styled(Link)`
+  color: white;
+  text-decoration: none;
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  
+  &:hover {
+    text-decoration: underline;
+  }
 `
 
 const PoemDynasty = styled.div`
@@ -77,6 +88,49 @@ const Tab = styled.button<{ active: boolean }>`
 const TabContent = styled.div`
   line-height: 1.8;
   font-size: ${props => props.theme.typography.fontSize.lg};
+  min-height: 100px;
+`
+
+const AuthorSection = styled.div`
+  background: ${props => props.theme.colors.background};
+  padding: ${props => props.theme.spacing.xl};
+  border-radius: ${props => props.theme.borderRadius.md};
+  margin-bottom: ${props => props.theme.spacing.xl};
+  border: 1px solid ${props => props.theme.colors.border};
+`
+
+const SectionTitle = styled.h3`
+  font-size: ${props => props.theme.typography.fontSize.xl};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  margin-bottom: ${props => props.theme.spacing.md};
+  color: ${props => props.theme.colors.primary};
+`
+
+const AuthorInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: ${props => props.theme.spacing.lg};
+`
+
+const AuthorText = styled.p`
+  flex: 1;
+  line-height: 1.6;
+  color: ${props => props.theme.colors.text.secondary};
+`
+
+const ViewAuthorButton = styled(Link)`
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.lg};
+  border-radius: ${props => props.theme.borderRadius.md};
+  text-decoration: none;
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
+  white-space: nowrap;
+  
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
 `
 
 const BackLink = styled(Link)`
@@ -93,28 +147,73 @@ const BackLink = styled(Link)`
   }
 `
 
+const LoadingContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.error};
+`
+
 const PoemDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  const [activeTab, setActiveTab] = useState<'annotation' | 'translation' | 'appreciation'>('annotation')
+  const [activeTab, setActiveTab] = useState<'annotation' | 'translation' | 'appreciation'>('appreciation')
   const [poem, setPoem] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // 模拟获取诗词详情
-    const mockPoem = {
-      id: parseInt(id || '1'),
-      title: '静夜思',
-      author: '李白',
-      dynasty: '唐代',
-      content: '床前明月光，疑是地上霜。\n举头望明月，低头思故乡。',
-      annotation: '这首诗写的是在寂静的月夜思念家乡的感受。诗的前两句，是写诗人在作客他乡的特定环境中一刹那间所产生的错觉。',
-      translation: 'Bright moonlight before my bed,\nI suspect it is frost on the ground.\nI raise my head to view the bright moon,\nThen lower it, thinking of my hometown.',
-      appreciation: '《静夜思》是唐代诗人李白所作的一首五言古诗。此诗描写了秋日夜晚，旅居在外的诗人于屋内抬头望月而思念家乡的感受。'
+    const fetchPoemData = async () => {
+      if (!id) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const poemData = await PoemService.getPoemById(id)
+        if (poemData) {
+          setPoem(poemData)
+        } else {
+          setError('未找到该诗词信息')
+        }
+        
+      } catch (err) {
+        setError('获取诗词详情失败，请稍后重试')
+        console.error('Error fetching poem data:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    setPoem(mockPoem)
+
+    fetchPoemData()
   }, [id])
 
+  if (loading) {
+    return (
+      <DetailContainer>
+        <LoadingContainer>加载中...</LoadingContainer>
+      </DetailContainer>
+    )
+  }
+
+  if (error) {
+    return (
+      <DetailContainer>
+        <ErrorContainer>{error}</ErrorContainer>
+      </DetailContainer>
+    )
+  }
+
   if (!poem) {
-    return <div>加载中...</div>
+    return (
+      <DetailContainer>
+        <ErrorContainer>未找到该诗词信息</ErrorContainer>
+      </DetailContainer>
+    )
   }
 
   return (
@@ -122,12 +221,26 @@ const PoemDetail: React.FC = () => {
       <PoemDetailCard>
         <PoemHeader>
           <PoemTitle>{poem.title}</PoemTitle>
-          <PoemAuthor>{poem.author}</PoemAuthor>
-          <PoemDynasty>{poem.dynasty}</PoemDynasty>
+          <PoemAuthor>
+            作者: <AuthorLink to={`/author/${poem.author_id}`}>{poem.authors?.name}</AuthorLink>
+          </PoemAuthor>
+          <PoemDynasty>{poem.dynasty} • {poem.type}</PoemDynasty>
         </PoemHeader>
         
         <PoemContent>
           <PoemText>{poem.content}</PoemText>
+          
+          <AuthorSection>
+            <SectionTitle>诗人简介</SectionTitle>
+            <AuthorInfo>
+              <AuthorText>
+                {poem.authors?.introduction || '暂无详细介绍'}
+              </AuthorText>
+              <ViewAuthorButton to={`/author/${poem.author_id}`}>
+                查看诗人详情
+              </ViewAuthorButton>
+            </AuthorInfo>
+          </AuthorSection>
           
           <TabsContainer>
             <Tab 
@@ -151,13 +264,44 @@ const PoemDetail: React.FC = () => {
           </TabsContainer>
           
           <TabContent>
-            {activeTab === 'annotation' && poem.annotation}
-            {activeTab === 'translation' && poem.translation}
-            {activeTab === 'appreciation' && poem.appreciation}
+            {activeTab === 'annotation' && (
+              <div>
+                <p>注释功能正在开发中...</p>
+                <p style={{ color: '#666', fontSize: '0.9em', marginTop: '10px' }}>
+                  我们正在努力为您提供更详细的注释内容。
+                </p>
+              </div>
+            )}
+            {activeTab === 'translation' && (
+              <div>
+                <p>翻译功能正在开发中...</p>
+                <p style={{ color: '#666', fontSize: '0.9em', marginTop: '10px' }}>
+                  我们正在努力为您提供准确的翻译内容。
+                </p>
+              </div>
+            )}
+            {activeTab === 'appreciation' && (
+              <div>
+                {poem.appreciations && poem.appreciations.length > 0 ? (
+                  poem.appreciations.map((appreciation: any) => (
+                    <div key={appreciation.id} style={{ marginBottom: '20px' }}>
+                      <p>{appreciation.content}</p>
+                      {appreciation.source && (
+                        <p style={{ color: '#666', fontSize: '0.9em', marginTop: '10px' }}>
+                          来源: {appreciation.source}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p>暂无赏析内容</p>
+                )}
+              </div>
+            )}
           </TabContent>
           
           <BackLink to="/search">
-            ← 返回搜索结果
+            ← 返回搜索页面
           </BackLink>
         </PoemContent>
       </PoemDetailCard>

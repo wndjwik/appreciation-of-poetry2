@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
 import SearchBar from '../components/SearchBar'
 import PoemCard from '../components/PoemCard'
+import PoemService from '../services/poemService'
 
 const SearchContainer = styled.div`
   min-height: calc(100vh - 120px);
@@ -44,6 +45,12 @@ const FilterSelect = styled.select`
   border-radius: ${props => props.theme.borderRadius.md};
   background: white;
   font-size: ${props => props.theme.typography.fontSize.base};
+  cursor: pointer;
+  
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+  }
 `
 
 const PoemsGrid = styled.div`
@@ -62,52 +69,73 @@ const NoResults = styled.div`
   font-size: ${props => props.theme.typography.fontSize.xl};
 `
 
+const LoadingContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['3xl']};
+  color: ${props => props.theme.colors.error};
+`
+
 const Search: React.FC = () => {
   const [searchParams] = useSearchParams()
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [dynastyFilter, setDynastyFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  
   const query = searchParams.get('q') || ''
 
   useEffect(() => {
     if (query) {
-      performSearch(query)
+      performSearch(query, dynastyFilter, typeFilter)
+    } else {
+      setSearchResults([])
     }
-  }, [query])
+  }, [query, dynastyFilter, typeFilter])
 
-  const performSearch = async (searchTerm: string) => {
+  const performSearch = async (searchTerm: string, dynasty: string, type: string) => {
     setIsLoading(true)
-    // 模拟搜索延迟
-    setTimeout(() => {
-      const mockResults = [
-        {
-          id: 1,
-          title: '静夜思',
-          author: '李白',
-          dynasty: '唐代',
-          content: '床前明月光，疑是地上霜。举头望明月，低头思故乡。'
-        },
-        {
-          id: 2,
-          title: '春晓',
-          author: '孟浩然',
-          dynasty: '唐代',
-          content: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。'
-        },
-        {
-          id: 3,
-          title: '登鹳雀楼',
-          author: '王之涣',
-          dynasty: '唐代',
-          content: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。'
-        }
-      ].filter(poem => 
-        poem.title.includes(searchTerm) ||
-        poem.author.includes(searchTerm) ||
-        poem.content.includes(searchTerm)
-      )
-      setSearchResults(mockResults)
+    setError(null)
+    
+    try {
+      const response = await PoemService.searchPoems({
+        query: searchTerm,
+        dynasty: dynasty || undefined,
+        type: type || undefined,
+        page: 1,
+        limit: 50
+      })
+      
+      setSearchResults(response.poems)
+      
+    } catch (err) {
+      setError('搜索失败，请稍后重试')
+      console.error('Search error:', err)
+    } finally {
       setIsLoading(false)
-    }, 500)
+    }
+  }
+
+  const handleDynastyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDynastyFilter(e.target.value)
+  }
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTypeFilter(e.target.value)
+  }
+
+  if (error) {
+    return (
+      <SearchContainer>
+        <ErrorContainer>{error}</ErrorContainer>
+      </SearchContainer>
+    )
   }
 
   return (
@@ -122,29 +150,49 @@ const Search: React.FC = () => {
         )}
         
         <FiltersContainer>
-          <FilterSelect>
+          <FilterSelect value={dynastyFilter} onChange={handleDynastyChange}>
             <option value="">所有朝代</option>
-            <option value="唐代">唐代</option>
-            <option value="宋代">宋代</option>
-            <option value="元代">元代</option>
-            <option value="明代">明代</option>
-            <option value="清代">清代</option>
+            <option value="唐">唐代</option>
+            <option value="宋">宋代</option>
+            <option value="元">元代</option>
+            <option value="明">明代</option>
+            <option value="清">清代</option>
+            <option value="先秦">先秦</option>
+            <option value="汉">汉代</option>
+            <option value="魏晋">魏晋</option>
+            <option value="南北朝">南北朝</option>
+            <option value="隋">隋代</option>
+            <option value="五代">五代</option>
+            <option value="辽">辽代</option>
+            <option value="金">金代</option>
+            <option value="近代">近代</option>
           </FilterSelect>
-          <FilterSelect>
+          <FilterSelect value={typeFilter} onChange={handleTypeChange}>
             <option value="">所有类型</option>
             <option value="诗">诗</option>
             <option value="词">词</option>
             <option value="曲">曲</option>
+            <option value="赋">赋</option>
+            <option value="乐府">乐府</option>
           </FilterSelect>
         </FiltersContainer>
       </SearchHeader>
 
       {isLoading ? (
-        <NoResults>搜索中...</NoResults>
+        <LoadingContainer>搜索中...</LoadingContainer>
       ) : searchResults.length > 0 ? (
         <PoemsGrid>
           {searchResults.map(poem => (
-            <PoemCard key={poem.id} poem={poem} />
+            <PoemCard 
+              key={poem.id} 
+              poem={{
+                id: poem.id,
+                title: poem.title,
+                author: poem.author_name,
+                dynasty: poem.dynasty,
+                content: poem.content
+              }} 
+            />
           ))}
         </PoemsGrid>
       ) : query ? (

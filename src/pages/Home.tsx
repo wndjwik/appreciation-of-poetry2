@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import SearchBar from '../components/SearchBar'
 import PoemCard from '../components/PoemCard'
+import PoemService from '../services/poemService'
 
 const HomeContainer = styled.div`
   min-height: calc(100vh - 120px);
@@ -101,30 +102,42 @@ const PoemsGrid = styled.div`
   padding: 0 ${props => props.theme.spacing.md};
 `
 
+const LoadingContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['2xl']};
+  color: ${props => props.theme.colors.text.secondary};
+`
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: ${props => props.theme.spacing['2xl']};
+  color: ${props => props.theme.colors.error};
+`
+
 const Home: React.FC = () => {
-  const featuredPoems = [
-    {
-      id: 1,
-      title: '静夜思',
-      author: '李白',
-      dynasty: '唐代',
-      content: '床前明月光，疑是地上霜。举头望明月，低头思故乡。'
-    },
-    {
-      id: 2,
-      title: '春晓',
-      author: '孟浩然',
-      dynasty: '唐代',
-      content: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。'
-    },
-    {
-      id: 3,
-      title: '登鹳雀楼',
-      author: '王之涣',
-      dynasty: '唐代',
-      content: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。'
+  const [featuredPoems, setFeaturedPoems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchFeaturedPoems = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const poems = await PoemService.getPopularPoems(6) // 获取6首热门诗词
+        setFeaturedPoems(poems)
+        
+      } catch (err) {
+        setError('获取推荐诗词失败，请稍后重试')
+        console.error('Error fetching featured poems:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchFeaturedPoems()
+  }, [])
 
   return (
     <HomeContainer>
@@ -171,11 +184,29 @@ const Home: React.FC = () => {
 
       <PoemsSection>
         <SectionTitle>经典诗词推荐</SectionTitle>
-        <PoemsGrid>
-          {featuredPoems.map(poem => (
-            <PoemCard key={poem.id} poem={poem} />
-          ))}
-        </PoemsGrid>
+        
+        {loading ? (
+          <LoadingContainer>加载中...</LoadingContainer>
+        ) : error ? (
+          <ErrorContainer>{error}</ErrorContainer>
+        ) : featuredPoems.length > 0 ? (
+          <PoemsGrid>
+            {featuredPoems.map(poem => (
+              <PoemCard 
+                key={poem.id} 
+                poem={{
+                  id: poem.id,
+                  title: poem.title,
+                  author: poem.authors?.name || '未知作者',
+                  dynasty: poem.dynasty,
+                  content: poem.content
+                }} 
+              />
+            ))}
+          </PoemsGrid>
+        ) : (
+          <LoadingContainer>暂无推荐诗词</LoadingContainer>
+        )}
       </PoemsSection>
     </HomeContainer>
   )
