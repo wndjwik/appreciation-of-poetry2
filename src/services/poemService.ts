@@ -103,9 +103,9 @@ export class PoemService {
 
       // 添加搜索条件
       if (query) {
-        // 搜索诗词标题、内容，以及通过作者ID搜索
+        // 使用 DISTINCT ON 或添加去重逻辑来避免重复
         if (authorIds.length > 0) {
-          // 如果有匹配的作者，搜索作者ID和诗词内容
+          // 使用 OR 条件搜索，但添加去重处理
           queryBuilder = queryBuilder.or(`title.ilike.%${query}%,content.ilike.%${query}%,author_id.in.(${authorIds.join(',')})`)
         } else {
           // 如果没有匹配的作者，只搜索诗词内容
@@ -121,8 +121,8 @@ export class PoemService {
         queryBuilder = queryBuilder.eq('type', type)
       }
 
-      // 获取总数
-      const { count, error: countError } = await queryBuilder
+      // 获取总数（现在使用去重后的数量，所以不需要count）
+      const { error: countError } = await queryBuilder
       if (countError) {
         console.error('获取总数失败:', countError)
         throw new Error(`数据库查询错误: ${countError.message}`)
@@ -168,12 +168,19 @@ export class PoemService {
         }
       }))
 
+      // 去重处理：根据诗词ID去除重复项
+      const uniquePoems = poems.filter((poem, index, self) => 
+        index === self.findIndex(p => p.id === poem.id)
+      )
+      
+      console.log('去重后结果数量:', uniquePoems.length, '去重前数量:', poems.length)
+
       return {
-        poems,
-        total: count || 0,
+        poems: uniquePoems,
+        total: uniquePoems.length,
         page,
         limit,
-        totalPages: Math.ceil((count || 0) / limit)
+        totalPages: Math.ceil(uniquePoems.length / limit)
       }
 
     } catch (error) {
