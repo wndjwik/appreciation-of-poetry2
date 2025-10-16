@@ -9,6 +9,8 @@ import Register from './pages/Register'
 import Search from './pages/Search'
 import PoemDetail from './pages/PoemDetail'
 import AuthorDetail from './pages/AuthorDetail'
+import ClassicalPoems from './pages/ClassicalPoems'
+import Authors from './pages/Authors'
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
               <Route path="/search" element={<Search />} />
               <Route path="/poem/:id" element={<PoemDetail />} />
               <Route path="/author/:id" element={<AuthorDetail />} />
+              <Route path="/classical-poems" element={<ClassicalPoems />} />
+              <Route path="/authors" element={<Authors />} />
             </Routes>
           </main>
         </div>

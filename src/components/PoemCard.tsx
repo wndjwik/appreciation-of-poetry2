@@ -68,7 +68,7 @@ const PoemCard: React.FC<PoemCardProps> = ({ poem }) => {
       <PoemTitle>{poem.title}</PoemTitle>
       <PoemAuthor>{poem.author} · {poem.dynasty}</PoemAuthor>
       <PoemContent>{poem.content}</PoemContent>
-      <ReadMoreLink to={`/poem/${poem.id}`}>
+      <ReadMoreLink to={`/poem/${poem.id}`} state={{ from: window.location.pathname }}>
         查看详情 →
       </ReadMoreLink>
     </Card>

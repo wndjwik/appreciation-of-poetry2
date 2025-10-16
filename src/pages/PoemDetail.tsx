@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import PoemService from '../services/poemService'
 
@@ -133,7 +133,7 @@ const ViewAuthorButton = styled(Link)`
   }
 `
 
-const BackLink = styled(Link)`
+const BackLink = styled.button`
   display: inline-flex;
   align-items: center;
   gap: ${props => props.theme.spacing.sm};
@@ -141,6 +141,11 @@ const BackLink = styled(Link)`
   text-decoration: none;
   font-weight: ${props => props.theme.typography.fontWeight.medium};
   margin-top: ${props => props.theme.spacing.xl};
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
 
   &:hover {
     text-decoration: underline;
@@ -161,10 +166,30 @@ const ErrorContainer = styled.div`
 
 const PoemDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'annotation' | 'translation' | 'appreciation'>('appreciation')
   const [poem, setPoem] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // 智能返回功能
+  const handleBack = () => {
+    // 1. 检查路由状态中的来源信息
+    if (location.state?.from) {
+      navigate(location.state.from)
+      return
+    }
+    
+    // 2. 检查历史记录长度，如果大于2则使用后退
+    if (window.history.length > 2) {
+      navigate(-1)
+      return
+    }
+    
+    // 3. 默认返回首页
+    navigate('/')
+  }
 
   useEffect(() => {
     const fetchPoemData = async () => {
@@ -222,7 +247,7 @@ const PoemDetail: React.FC = () => {
         <PoemHeader>
           <PoemTitle>{poem.title}</PoemTitle>
           <PoemAuthor>
-            作者: <AuthorLink to={`/author/${poem.author_id}`}>{poem.authors?.name}</AuthorLink>
+            作者: <AuthorLink to={`/author/${poem.author_id}`} state={{ from: window.location.pathname }}>{poem.authors?.name}</AuthorLink>
           </PoemAuthor>
           <PoemDynasty>{poem.dynasty} • {poem.type}</PoemDynasty>
         </PoemHeader>
@@ -300,8 +325,8 @@ const PoemDetail: React.FC = () => {
             )}
           </TabContent>
           
-          <BackLink to="/search">
-            ← 返回搜索页面
+          <BackLink onClick={handleBack}>
+            ← 返回
           </BackLink>
         </PoemContent>
       </PoemDetailCard>

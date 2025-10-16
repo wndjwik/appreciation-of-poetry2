@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { ClassicalPoemFilters, ClassicalPoemsResponse, CategoryStats, AuthorFilters, AuthorsResponse, AuthorStats } from '../types/database'
 
 // 简化类型定义，避免导入问题
 export type Poem = {
@@ -340,6 +341,125 @@ export class PoemService {
     }
   }
 
+  // 获取经典诗词列表
+  static async getClassicalPoems(filters: ClassicalPoemFilters = {}): Promise<ClassicalPoemsResponse> {
+    const { 
+      dynasty, 
+      genre, 
+      sortBy = 'popular', 
+      page = 1, 
+      pageSize = 12,
+      search 
+    } = filters
+
+    const offset = (page - 1) * pageSize
+
+    try {
+      let queryBuilder = supabase
+        .from('poems')
+        .select(`
+          *,
+          authors (*),
+          appreciations (*)
+        `, { count: 'exact' })
+
+      // 应用筛选条件
+      if (dynasty) {
+        queryBuilder = queryBuilder.eq('dynasty', dynasty)
+      }
+
+      if (genre) {
+        queryBuilder = queryBuilder.contains('themes', [genre])
+      }
+
+      if (search) {
+        queryBuilder = queryBuilder.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+      }
+
+      // 应用排序
+      switch (sortBy) {
+        case 'time':
+          queryBuilder = queryBuilder.order('created_at', { ascending: false })
+          break
+        case 'length':
+          queryBuilder = queryBuilder.order('content', { ascending: true })
+          break
+        case 'popular':
+        default:
+          queryBuilder = queryBuilder.order('created_at', { ascending: false })
+          break
+      }
+
+      // 获取总数和数据
+      const { data, count, error } = await queryBuilder
+        .range(offset, offset + pageSize - 1)
+
+      if (error) {
+        console.error('获取经典诗词失败:', error)
+        throw new Error(`数据库查询错误: ${error.message}`)
+      }
+
+      return {
+        poems: data || [],
+        total: count || 0,
+        page,
+        pageSize,
+        totalPages: Math.ceil((count || 0) / pageSize),
+        filters
+      }
+
+    } catch (error) {
+      console.error('获取经典诗词失败:', error)
+      throw new Error('获取经典诗词失败，请稍后重试')
+    }
+  }
+
+  // 获取分类统计信息
+  static async getCategoryStats(): Promise<CategoryStats> {
+    try {
+      // 获取朝代统计
+      const { data: dynastyData, error: dynastyError } = await supabase
+        .from('poems')
+        .select('dynasty')
+
+      if (dynastyError) throw dynastyError
+
+      const dynastyStats: { [key: string]: number } = {}
+      dynastyData?.forEach(item => {
+        dynastyStats[item.dynasty] = (dynastyStats[item.dynasty] || 0) + 1
+      })
+
+      // 获取流派统计（简化版，使用第一个主题作为流派）
+      const { data: themeData, error: themeError } = await supabase
+        .from('poems')
+        .select('themes')
+
+      if (themeError) throw themeError
+
+      const genreStats: { [key: string]: number } = {}
+      themeData?.forEach(item => {
+        if (item.themes && item.themes.length > 0) {
+          const mainTheme = item.themes[0]
+          genreStats[mainTheme] = (genreStats[mainTheme] || 0) + 1
+        }
+      })
+
+      return {
+        dynasty: dynastyStats,
+        genre: genreStats,
+        total: dynastyData?.length || 0
+      }
+
+    } catch (error) {
+      console.error('获取分类统计失败:', error)
+      return {
+        dynasty: {},
+        genre: {},
+        total: 0
+      }
+    }
+  }
+
   // 获取诗人的所有诗词作品
   static async getPoemsByAuthor(authorId: string | number, limit: number = 20): Promise<Poem[]> {
     try {
@@ -382,6 +502,129 @@ export class PoemService {
     const authorMatch = (poem.authors?.name || '').toLowerCase().includes(query.toLowerCase()) ? 0.2 : 0
 
     return titleMatch + contentMatch + authorMatch
+  }
+
+  // 获取诗人列表
+  static async getAuthors(filters: AuthorFilters = {}): Promise<AuthorsResponse> {
+    const { 
+      dynasty, 
+      search, 
+      sortBy = 'name', 
+      page = 1, 
+      pageSize = 12 
+    } = filters
+
+    const offset = (page - 1) * pageSize
+
+    try {
+      let queryBuilder = supabase
+        .from('authors')
+        .select('*', { count: 'exact' })
+
+      // 应用筛选条件
+      if (dynasty) {
+        queryBuilder = queryBuilder.eq('dynasty', dynasty)
+      }
+
+      if (search) {
+        queryBuilder = queryBuilder.ilike('name', `%${search}%`)
+      }
+
+      // 应用排序
+      switch (sortBy) {
+        case 'dynasty':
+          queryBuilder = queryBuilder.order('dynasty').order('name')
+          break
+        case 'popular':
+          queryBuilder = queryBuilder.order('created_at', { ascending: false })
+          break
+        case 'name':
+        default:
+          queryBuilder = queryBuilder.order('name')
+          break
+      }
+
+      // 获取总数和数据
+      const { data, count, error } = await queryBuilder
+        .range(offset, offset + pageSize - 1)
+
+      if (error) {
+        console.error('获取诗人列表失败:', error)
+        throw new Error(`数据库查询错误: ${error.message}`)
+      }
+
+      // 获取每个诗人的作品数量
+      const authorsWithPoemCount = await Promise.all(
+        (data || []).map(async (author) => {
+          const poems = await this.getPoemsByAuthor(author.id, 1000) // 获取所有作品
+          return {
+            ...author,
+            poemCount: poems.length
+          }
+        })
+      )
+
+      return {
+        authors: authorsWithPoemCount,
+        total: count || 0,
+        page,
+        pageSize,
+        totalPages: Math.ceil((count || 0) / pageSize),
+        filters
+      }
+
+    } catch (error) {
+      console.error('获取诗人列表失败:', error)
+      throw new Error('获取诗人列表失败，请稍后重试')
+    }
+  }
+
+  // 获取诗人统计信息
+  static async getAuthorStats(): Promise<AuthorStats> {
+    try {
+      const { data, error } = await supabase
+        .from('authors')
+        .select('dynasty')
+
+      if (error) throw error
+
+      const dynastyStats: { [key: string]: number } = {}
+      data?.forEach(author => {
+        dynastyStats[author.dynasty] = (dynastyStats[author.dynasty] || 0) + 1
+      })
+
+      return {
+        dynasty: dynastyStats,
+        total: data?.length || 0
+      }
+
+    } catch (error) {
+      console.error('获取诗人统计失败:', error)
+      return {
+        dynasty: {},
+        total: 0
+      }
+    }
+  }
+
+  // 获取热门诗人（按作品数量排序）
+  static async getPopularAuthors(limit: number = 10): Promise<Author[]> {
+    try {
+      const allAuthors = await this.getAuthors({ pageSize: 1000 })
+      
+      // 按作品数量排序
+      const sortedAuthors = allAuthors.authors.sort((a, b) => {
+        const aCount = (a as any).poemCount || 0
+        const bCount = (b as any).poemCount || 0
+        return bCount - aCount
+      })
+
+      return sortedAuthors.slice(0, limit)
+
+    } catch (error) {
+      console.error('获取热门诗人失败:', error)
+      return []
+    }
   }
 }
 

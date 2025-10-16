@@ -1,6 +1,7 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
+import AuthService from '../services/authService'
 
 const LoginContainer = styled.div`
   min-height: calc(100vh - 120px);
@@ -86,16 +87,74 @@ const RegisterLink = styled.div`
   }
 `
 
+const ErrorMessage = styled.div`
+  background: ${props => props.theme.colors.error}20;
+  color: ${props => props.theme.colors.error};
+  padding: ${props => props.theme.spacing.md};
+  border-radius: ${props => props.theme.borderRadius.md};
+  margin-bottom: ${props => props.theme.spacing.lg};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+`
+
+const SuccessMessage = styled.div`
+  background: ${props => props.theme.colors.success}20;
+  color: ${props => props.theme.colors.success};
+  padding: ${props => props.theme.spacing.md};
+  border-radius: ${props => props.theme.borderRadius.md};
+  margin-bottom: ${props => props.theme.spacing.lg};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+`
+
 const Login: React.FC = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleInputChange = (field: keyof typeof formData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }))
+    setError('')
+    setSuccess('')
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 登录逻辑将在后续实现
+    setIsLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      await AuthService.login(formData)
+      setSuccess('登录成功！正在跳转到首页...')
+      
+      setTimeout(() => {
+        navigate('/')
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message || '登录失败，请稍后重试')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const isFormValid = () => {
+    return formData.email && formData.password
   }
 
   return (
     <LoginContainer>
       <LoginCard>
         <LoginTitle>用户登录</LoginTitle>
+        
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {success && <SuccessMessage>{success}</SuccessMessage>}
+        
         <form onSubmit={handleSubmit}>
           <FormGroup>
             <Label htmlFor="email">邮箱地址</Label>
@@ -103,6 +162,8 @@ const Login: React.FC = () => {
               type="email"
               id="email"
               placeholder="请输入您的邮箱"
+              value={formData.email}
+              onChange={handleInputChange('email')}
               required
             />
           </FormGroup>
@@ -112,10 +173,17 @@ const Login: React.FC = () => {
               type="password"
               id="password"
               placeholder="请输入您的密码"
+              value={formData.password}
+              onChange={handleInputChange('password')}
               required
             />
           </FormGroup>
-          <LoginButton type="submit">登录</LoginButton>
+          <LoginButton 
+            type="submit" 
+            disabled={!isFormValid() || isLoading}
+          >
+            {isLoading ? '登录中...' : '登录'}
+          </LoginButton>
         </form>
         <RegisterLink>
           还没有账号？ <Link to="/register">立即注册</Link>

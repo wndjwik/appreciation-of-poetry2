@@ -118,10 +118,10 @@ const Header: React.FC = () => {
           <NavLink to="/search" $active={location.pathname === '/search'}>
             诗词搜索
           </NavLink>
-          <NavLink to="/#classical" $active={false}>
+          <NavLink to="/classical-poems" $active={location.pathname === '/classical-poems'}>
             经典诗词
           </NavLink>
-          <NavLink to="/#authors" $active={false}>
+          <NavLink to="/authors" $active={location.pathname === '/authors'}>
             诗人介绍
           </NavLink>
         </NavLinks>
