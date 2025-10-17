@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
+import { useAuth } from '../hooks/useAuth'
 import AuthService from '../services/authService'
 
 const RegisterContainer = styled.div`
@@ -133,6 +134,7 @@ const SuccessMessage = styled.div`
 
 const Register: React.FC = () => {
   const navigate = useNavigate()
+  const { register, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
@@ -209,12 +211,12 @@ const Register: React.FC = () => {
     setSuccess('')
 
     try {
-      await AuthService.register(formData)
-      setSuccess('注册成功！正在跳转到登录页面...')
+      await register(formData.email, formData.nickname, formData.password, formData.confirmPassword)
+      setSuccess('注册成功！正在跳转到首页...')
       
       setTimeout(() => {
-        navigate('/login')
-      }, 2000)
+        navigate('/')
+      }, 1000)
     } catch (err: any) {
       setError(err.message || '注册失败，请稍后重试')
     } finally {
@@ -315,9 +317,9 @@ const Register: React.FC = () => {
 
           <RegisterButton 
             type="submit" 
-            disabled={!isFormValid() || isLoading}
+            disabled={!isFormValid() || isLoading || authLoading}
           >
-            {isLoading ? '注册中...' : '注册'}
+            {isLoading || authLoading ? '注册中...' : '注册'}
           </RegisterButton>
         </form>
         <LoginLink>

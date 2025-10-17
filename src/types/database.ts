@@ -186,6 +186,29 @@ export interface Database {
           created_at?: string
         }
       }
+      user_profiles: {
+        Row: {
+          id: string
+          email: string
+          nickname: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email: string
+          nickname: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          nickname?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
+import { useAuth } from '../hooks/useAuth'
 import SearchBar from './SearchBar'
 
 const HeaderContainer = styled.header`
@@ -77,6 +78,8 @@ const Button = styled(Link)`
   border-radius: ${props => props.theme.borderRadius.md};
   font-weight: ${props => props.theme.typography.fontWeight.medium};
   transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
 
   &.login {
     background: transparent;
@@ -100,9 +103,69 @@ const Button = styled(Link)`
   }
 `
 
+const UserMenu = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.md};
+`
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+  color: white;
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
+`
+
+const UserAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  color: white;
+  font-weight: bold;
+`
+
+const LogoutButton = styled.button`
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.lg};
+  border-radius: ${props => props.theme.borderRadius.md};
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: white;
+    color: #2c3e50;
+    transform: translateY(-1px);
+  }
+`
+
 const Header: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, loading, logout } = useAuth()
   const [isSearchVisible, setIsSearchVisible] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/')
+    } catch (error) {
+      console.error('退出登录失败:', error)
+    }
+  }
+
+  // 获取用户昵称的首字符作为头像
+  const getAvatarText = (nickname: string) => {
+    return nickname.charAt(0).toUpperCase()
+  }
 
   return (
     <HeaderContainer>
@@ -126,14 +189,30 @@ const Header: React.FC = () => {
           </NavLink>
         </NavLinks>
 
-        <AuthButtons>
-          <Button to="/login" className="login">
-            登录
-          </Button>
-          <Button to="/register" className="register">
-            注册
-          </Button>
-        </AuthButtons>
+        {!loading && (
+          <UserMenu>
+            {user ? (
+              <UserInfo>
+                <UserAvatar>
+                  {getAvatarText(user.nickname)}
+                </UserAvatar>
+                <span>{user.nickname}</span>
+                <LogoutButton onClick={handleLogout}>
+                  退出
+                </LogoutButton>
+              </UserInfo>
+            ) : (
+              <AuthButtons>
+                <Button to="/login" className="login">
+                  登录
+                </Button>
+                <Button to="/register" className="register">
+                  注册
+                </Button>
+              </AuthButtons>
+            )}
+          </UserMenu>
+        )}
       </Nav>
 
       {isSearchVisible && (

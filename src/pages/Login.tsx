@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import AuthService from '../services/authService'
+import { useAuth } from '../hooks/useAuth'
 
 const LoginContainer = styled.div`
   min-height: calc(100vh - 120px);
@@ -107,6 +107,7 @@ const SuccessMessage = styled.div`
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
+  const { login, loading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -130,12 +131,12 @@ const Login: React.FC = () => {
     setSuccess('')
 
     try {
-      await AuthService.login(formData)
+      await login(formData.email, formData.password)
       setSuccess('登录成功！正在跳转到首页...')
       
       setTimeout(() => {
         navigate('/')
-      }, 2000)
+      }, 1000)
     } catch (err: any) {
       setError(err.message || '登录失败，请稍后重试')
     } finally {
@@ -180,9 +181,9 @@ const Login: React.FC = () => {
           </FormGroup>
           <LoginButton 
             type="submit" 
-            disabled={!isFormValid() || isLoading}
+            disabled={!isFormValid() || isLoading || authLoading}
           >
-            {isLoading ? '登录中...' : '登录'}
+            {isLoading || authLoading ? '登录中...' : '登录'}
           </LoginButton>
         </form>
         <RegisterLink>

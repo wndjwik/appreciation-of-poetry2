@@ -105,7 +105,7 @@ class AuthService {
             nickname: userData.nickname,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          })
+          } as any) // 使用类型断言避免TypeScript错误
         
         if (profileError) {
           // 如果是表不存在的错误，继续注册流程（资料表可选）
