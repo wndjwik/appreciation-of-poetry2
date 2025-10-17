@@ -1,44 +1,65 @@
-# 诗词鉴赏应用
+# 诗词鉴赏应用 (Appreciation of Poetry)
 
-基于React + TypeScript + Supabase开发的诗词鉴赏平台，提供诗词查询、赏析和用户管理功能。
+一个现代化的诗词鉴赏Web应用，集成了AI聊天助手功能。
 
-## 技术栈
+## 🌟 功能特性
 
-- **前端**: React 18 + TypeScript + Vite
-- **样式**: Styled Components
-- **路由**: React Router 6
-- **后端**: Supabase (PostgreSQL + Auth + Storage)
-- **部署**: Vercel
+### 核心功能
+- **诗词浏览**：查看经典诗词作品
+- **作者信息**：了解诗人背景和作品
+- **智能搜索**：按标题、作者、内容搜索
+- **AI助手**：专业的诗词鉴赏AI聊天机器人
 
-## 功能特性
+### AI聊天功能
+- 🤖 智能诗词赏析和创作建议
+- 💬 实时流式对话体验
+- 📱 响应式设计，支持移动端
+- ⚡ 快速响应，逐字显示效果
 
-### 已实现功能
-- ✅ 诗词搜索（标题、作者、内容）
-- ✅ 诗词详情展示
-- ✅ 作者信息
-- ✅ 诗词赏析
-- ✅ 响应式设计
+## 🚀 技术栈
 
-### 待开发功能
-- 🔄 用户注册登录
-- 🔄 收藏功能
-- 🔄 评论系统
-- 🔄 个性化推荐
+### 前端
+- **React 18** + TypeScript
+- **Vite** - 快速构建工具
+- **Styled Components** - CSS-in-JS样式方案
+- **Context API** - 状态管理
 
-## 快速开始
+### AI服务
+- **模拟AI服务** - 本地智能回复（当前）
+- **讯飞星火API** - 真实AI集成（可选）
+- **n8n工作流** - 自动化AI调用（规划中）
+
+## 📦 项目结构
+
+```
+appreciation-of-poetry2/
+├── src/
+│   ├── components/          # React组件
+│   │   ├── AIChatPanel.tsx # AI聊天面板
+│   │   ├── MessageList.tsx  # 消息列表
+│   │   └── MessageInput.tsx # 消息输入
+│   ├── services/            # 服务层
+│   │   ├── mockAIService.ts # 模拟AI服务
+│   │   └── sparkAIService.ts # AI服务接口
+│   ├── contexts/            # React上下文
+│   │   └── AIChatContext.tsx # 聊天状态管理
+│   └── types/               # TypeScript类型定义
+├── server/                  # 后端服务（开发中）
+└── scripts/                 # 数据导入脚本
+```
+
+## 🛠️ 快速开始
 
 ### 环境要求
-
 - Node.js 16+
 - npm 或 yarn
-- Supabase 账户
 
-### 安装步骤
+### 安装和运行
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd appreciation-of-poetry
+git clone https://github.com/wndjwik/appreciation-of-poetry2.git
+cd appreciation-of-poetry2
 ```
 
 2. **安装依赖**
@@ -46,182 +67,89 @@ cd appreciation-of-poetry
 npm install
 ```
 
-3. **配置环境变量**
+3. **环境配置**
 ```bash
-# 复制环境变量模板
 cp .env.example .env
-
-# 编辑 .env 文件，填入你的Supabase配置
-VITE_SUPABASE_URL=你的项目URL
-VITE_SUPABASE_ANON_KEY=你的anon key
+# 编辑.env文件配置环境变量
 ```
 
-4. **设置Supabase项目**
-   - 在 [Supabase官网](https://supabase.com) 创建新项目
-   - 获取项目URL和anon key
-   - 在项目SQL编辑器中执行 `scripts/init-database.sql`
-
-5. **导入样本数据**
-```bash
-# 初始化数据库和导入数据
-npm run db:init
-```
-
-6. **启动开发服务器**
+4. **启动开发服务器**
 ```bash
 npm run dev
 ```
 
-## 项目结构
+5. **访问应用**
+打开浏览器访问 http://localhost:3000
 
-```
-src/
-├── components/          # 公共组件
-│   ├── Header.tsx       # 顶部导航
-│   ├── PoemCard.tsx     # 诗词卡片
-│   └── SearchBar.tsx    # 搜索框
-├── pages/               # 页面组件
-│   ├── Home.tsx        # 首页
-│   ├── Login.tsx       # 登录页
-│   ├── Register.tsx    # 注册页
-│   ├── Search.tsx      # 搜索页
-│   └── PoemDetail.tsx  # 诗词详情页
-├── services/            # 服务层
-│   └── poemService.ts  # 诗词数据服务
-├── lib/                 # 工具库
-│   └── supabase.ts     # Supabase客户端
-├── types/              # 类型定义
-│   └── database.ts     # 数据库类型
-└── styles/             # 样式文件
-    ├── GlobalStyle.ts  # 全局样式
-    └── theme.ts        # 主题配置
-
-scripts/
-├── init-database.sql    # 数据库初始化脚本
-├── generate-sample-data.ts # 样本数据生成
-└── import-data.ts      # 数据导入工具
-```
-
-## 数据库设计
-
-### 核心表结构
-
-**authors (作者表)**
-- id (UUID) - 主键
-- name (TEXT) - 作者姓名
-- dynasty (TEXT) - 朝代
-- introduction (TEXT) - 简介
-- birth_year (INTEGER) - 出生年份
-- death_year (INTEGER) - 逝世年份
-
-**poems (诗词表)**
-- id (UUID) - 主键
-- title (TEXT) - 标题
-- content (TEXT) - 内容
-- dynasty (TEXT) - 朝代
-- author_id (UUID) - 作者外键
-- type (TEXT) - 类型（诗、词等）
-- themes (TEXT[]) - 主题标签数组
-
-**appreciations (赏析表)**
-- id (UUID) - 主键
-- poem_id (UUID) - 诗词外键
-- content (TEXT) - 赏析内容
-- source (TEXT) - 来源
-
-## 开发指南
-
-### 添加新的诗词数据
-
-1. **通过脚本添加**
+### 构建生产版本
 ```bash
-npm run db:generate
+npm run build
+npm run preview
 ```
 
-2. **手动添加数据**
-```typescript
-import { supabase } from './lib/supabase'
+## 🔧 开发指南
 
-// 添加作者
-const { data: author } = await supabase
-  .from('authors')
-  .insert([{
-    name: '作者名',
-    dynasty: '朝代',
-    introduction: '简介'
-  }])
-  .select()
+### AI功能开发
+项目支持两种AI实现方式：
 
-// 添加诗词
-const { data: poem } = await supabase
-  .from('poems')
-  .insert([{
-    title: '标题',
-    content: '内容',
-    dynasty: '朝代',
-    author_id: author.id,
-    type: '诗',
-    themes: ['主题1', '主题2']
-  }])
-  .select()
-```
+1. **模拟AI服务**（当前默认）
+   - 本地运行的智能回复系统
+   - 无需外部API密钥
+   - 适合开发和测试
 
-### 自定义搜索功能
+2. **真实AI集成**（可选）
+   - 基于讯飞星火大模型
+   - 需要API密钥配置
+   - 提供更智能的回复
 
-```typescript
-import PoemService from './services/poemService'
+### 添加新的AI服务
+参考 `src/services/mockAIService.ts` 实现新的服务类，然后在 `sparkAIService.ts` 中切换使用。
 
-// 基础搜索
-const results = await PoemService.searchPoems({
-  query: '李白',
-  page: 1,
-  limit: 10
-})
+## 📱 功能演示
 
-// 高级搜索
-const results = await PoemService.searchPoems({
-  query: '月亮',
-  dynasty: '唐',
-  type: '诗'
-})
+### AI聊天界面
+- 侧边栏式聊天面板
+- 实时消息流式显示
+- 快速操作按钮
+- 点击外部区域关闭
 
-// 全文搜索
-const results = await PoemService.fullTextSearch('静夜思')
-```
+### 响应式设计
+- 桌面端：400px侧边栏
+- 移动端：全屏显示
+- 平滑动画过渡效果
 
-## 部署指南
+## 🔄 部署选项
 
-### Vercel 部署
+### Vercel部署（推荐）
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/wndjwik/appreciation-of-poetry2)
 
-1. 将代码推送到GitHub仓库
-2. 在Vercel中导入项目
-3. 配置环境变量
-4. 部署完成
+### 其他平台
+- Netlify
+- GitHub Pages
+- 自有服务器
 
-### 环境变量配置
+## 🤝 贡献指南
 
-在Vercel项目设置中配置：
-- `VITE_SUPABASE_URL` - Supabase项目URL
-- `VITE_SUPABASE_ANON_KEY` - Supabase匿名密钥
+欢迎提交Issue和Pull Request！
 
-## 贡献指南
-
-1. Fork 项目
+1. Fork本项目
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建Pull Request
+5. 开启Pull Request
 
-## 许可证
+## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+本项目采用MIT许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## 联系方式
+## 🙏 致谢
 
-如有问题或建议，请通过以下方式联系：
-- 提交 Issue
-- 发送邮件
+- 诗词数据来源：[...]
+- UI设计灵感：[...]
+- 技术栈支持：React、Vite、TypeScript等
 
 ---
 
-**享受诗词之美，传承中华文化** 📚✨
+**开发中功能**：真实AI集成、用户认证、数据持久化等。
+
+如有问题请提交 [Issue](https://github.com/wndjwik/appreciation-of-poetry2/issues)。
