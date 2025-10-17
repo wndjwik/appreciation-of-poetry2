@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from 'styled-components'
 import { theme } from './styles/theme'
 import { AuthProvider } from './contexts/AuthContext'
+import { AIChatProvider } from './contexts/AIChatContext'
+import AIChat from './components/AIChat'
 import Header from './components/Header'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -17,23 +19,26 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>
-        <Router>
-          <div className="App">
-            <Header />
-            <main>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/poem/:id" element={<PoemDetail />} />
-                <Route path="/author/:id" element={<AuthorDetail />} />
-                <Route path="/classical-poems" element={<ClassicalPoems />} />
-                <Route path="/authors" element={<Authors />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
+        <AIChatProvider>
+          <Router>
+            <div className="App">
+              <Header />
+              <main>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/poem/:id" element={<PoemDetail />} />
+                  <Route path="/author/:id" element={<AuthorDetail />} />
+                  <Route path="/classical-poems" element={<ClassicalPoems />} />
+                  <Route path="/authors" element={<Authors />} />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+          <AIChat />
+        </AIChatProvider>
       </AuthProvider>
     </ThemeProvider>
   )
