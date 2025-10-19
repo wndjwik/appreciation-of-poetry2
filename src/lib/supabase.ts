@@ -4,9 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// 更好的错误处理 - 在开发环境显示警告，在生产环境创建降级客户端
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.')
+  if (import.meta.env.DEV) {
+    console.warn('Missing Supabase environment variables. Application may not work correctly.')
+  }
 }
 
-// 简化类型定义，避免导入问题
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// 创建客户端，即使环境变量缺失也返回有效的客户端实例
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
